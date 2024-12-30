@@ -1,0 +1,2 @@
+recursive-include dmad_on_django/static *
+recursive-include dmad_on_django/templates *
