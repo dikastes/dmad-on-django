@@ -1,8 +1,11 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from iso639 import data as iso639_data
+from pylobid.pylobid import PyLobidClient, GNDIdError, GNDNotFoundError, GNDAPIError, PyLobidPerson, PyLobidPlace, PyLobidOrg
 
 # Create your models here.
+
+max_trials = 3
 
 Language = { iso_data['iso639_1'].upper() : iso_data['name'] for iso_data in iso639_data }
 
@@ -64,6 +67,20 @@ class PersonName(models.Model):
             default = Status.PRIMARY
         )
 
+    def parse_comma_separated_string(self, comma_separated_string):
+        names = comma_separated_string.split(',')
+        self.last_name = names[0]
+        if len(names) > 1:
+            self.first_name = ' '.join([ name.strip() for name in names[1:]])
+        return self
+
+    def create_from_comma_separated_string(self, comma_separated_string, status, person):
+        name = PersonName()
+        name.status = status
+        name.person = person
+        return name.parse_from_comma_separated_string(comma_separated_string)
+
+
     def __str__(self):
         return f'{self.first_name} {self.last_name}'
 
@@ -110,6 +127,23 @@ class Person(models.Model):
             blank=True,
             related_name='activity_place_of'
         )
+
+    def sync_with_gnd(self):
+        trials = max_trials
+        url = f"http://d-nb.info/gnd/{self.gnd_id}"
+        while trials:
+            try:
+                pl_person = PyLobidPerson(url, fetch_related=True)
+            #except GNDIdError:
+            #except GNDNotFoundError:
+            except GNDAPIError:
+                trials -= 1
+                pass
+            break
+        PersonName.create_from_comma_separated_string(pl_person.pref_name, Status.PRIMARY, self)
+        self.date_of_birth, self.date_of_death = pl_pers.life_span
+        self.place_of_birth = pl_pers.birth_place
+        self.place_of_death = pl_pers.death_place
 
     def get_default_name(self):
         return f'{self.names.get(status=Status.PRIMARY).__str__()}'

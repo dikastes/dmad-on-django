@@ -7,7 +7,8 @@ name = "dmad-on-django"
 version = "0.0.1"
 dependencies = [
 	"django>=5.1",
-	"iso639"
+	"iso639",
+	"pylobid"
 ]
 description = "The Dresden Module for Authority Data Management rebuilt on Django"
 readme = "README.md"
