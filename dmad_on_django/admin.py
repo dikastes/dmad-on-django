@@ -8,11 +8,18 @@ class PlaceNameInline(admin.TabularInline):
 class PersonNameInline(admin.TabularInline):
     model = PersonName
 
+@admin.register(Place)
 class PlaceAdmin(admin.ModelAdmin):
     inlines = [PlaceNameInline]
 
+@admin.action(description="Update these entities from the GND")
+def update_from_gnd(modeladmin, request, queryset):
+    for entity in queryset:
+        entity.fetch_raw()
+        entity.update_from_raw()
+        entity.save()
+
+@admin.register(Person)
 class PersonAdmin(admin.ModelAdmin):
     inlines = [PersonNameInline]
-
-admin.site.register(Person, PersonAdmin)
-admin.site.register(Place, PlaceAdmin)
+    actions = [update_from_gnd]
