@@ -8,7 +8,12 @@ from json import dumps, loads
 
 max_trials = 3
 
-Language = { iso_data['iso639_1'].upper() : iso_data['name'] for iso_data in iso639_data }
+languages = { iso_data['iso639_1'].upper() : iso_data['name'] for iso_data in iso639_data }
+Language = {}
+for key in ['DE', 'FR', 'HU', 'EN']:
+    Language[key] = languages[key]
+for key in languages:
+    Language[key] = languages[key]
 
 class Status(models.TextChoices):
     PRIMARY = 'P', _('Primary')
@@ -312,3 +317,19 @@ class Person(models.Model):
         if len(date_list) > 2 and date_list[2].isnumeric():
             day = date_list[2]
         return '-'.join([year, month, day])
+
+class Period(models.Model):
+    not_before = models.DateField(
+            null=True,
+            blank=True
+        )
+    not_after = models.DateField(
+            null=True,
+            blank=True
+        )
+    display = models.TextField()
+
+    def render_detailed(self):
+        if self.not_before == self.not_after:
+            return f"{self.display} ({self.not_before})"
+        return f"{self.display} ({self.not_before}&ndash;{self.not_after})"
