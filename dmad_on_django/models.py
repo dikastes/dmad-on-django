@@ -333,3 +333,6 @@ class Period(models.Model):
         if self.not_before == self.not_after:
             return f"{self.display} ({self.not_before})"
         return f"{self.display} ({self.not_before}&ndash;{self.not_after})"
+
+    def __str__(self):
+        return self.display
